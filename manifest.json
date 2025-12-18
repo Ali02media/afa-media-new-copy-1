@@ -7,16 +7,16 @@
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "https://ik.imagekit.io/hxkb52bem/afa%20media%20logo%20no%20BG.png?tr=w-192,h-192,trim-true&v=2.0",
+      "src": "https://ik.imagekit.io/hxkb52bem/afa%20media%20logo%20no%20BG.png?tr=w-192,h-192,trim-true,fo-auto&v=4.0",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://ik.imagekit.io/hxkb52bem/afa%20media%20logo%20no%20BG.png?tr=w-512,h-512,trim-true&v=2.0",
+      "src": "https://ik.imagekit.io/hxkb52bem/afa%20media%20logo%20no%20BG.png?tr=w-512,h-512,trim-true,fo-auto&v=4.0",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
