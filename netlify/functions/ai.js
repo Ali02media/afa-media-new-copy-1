@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 
 export const handler = async (event, context) => {
   console.log("AI Function: Request received");
@@ -21,15 +22,15 @@ export const handler = async (event, context) => {
   }
 
   try {
-    // Check both standard variable names to be safe
-    const apiKey = process.env.API_KEY || process.env.GOOGLE_API_KEY;
+    // API key must be obtained exclusively from environment variable process.env.API_KEY
+    const apiKey = process.env.API_KEY;
 
     if (!apiKey) {
       console.error("AI Function: API Key missing");
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: "Server Configuration Error: API Key missing in Netlify settings." })
+        body: JSON.stringify({ error: "Server Configuration Error: API_KEY missing in Netlify settings." })
       };
     }
 
@@ -40,16 +41,16 @@ export const handler = async (event, context) => {
     const requestBody = JSON.parse(event.body);
     const { endpointType, systemInstruction, prompt, history, message, image } = requestBody;
 
-    // Use standard 1.5 Flash model for maximum compatibility and speed
-    const model = 'gemini-1.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // Use gemini-3-flash-preview for general tasks following the coding guidelines
+    const modelName = 'gemini-3-flash-preview';
+    const ai = new GoogleGenAI({ apiKey });
 
     let contents = [];
 
     if (endpointType === 'chat') {
       if (history && Array.isArray(history)) {
         contents = history.map(msg => ({
-          role: msg.role,
+          role: msg.role === 'model' ? 'model' : 'user',
           parts: msg.parts
         }));
       }
@@ -68,50 +69,31 @@ export const handler = async (event, context) => {
       }
       contents.push({ role: "user", parts: newParts });
     } else {
-      contents.push({
+      contents = [{
         role: "user",
         parts: [{ text: prompt || "Hello" }]
-      });
+      }];
     }
 
-    const payload = {
+    console.log(`Sending request to Google Gemini (${modelName})...`);
+    // Using ai.models.generateContent to query GenAI with both model name and prompt/contents
+    const response = await ai.models.generateContent({
+      model: modelName,
       contents: contents,
-      generationConfig: {
+      config: {
+        systemInstruction: systemInstruction,
         maxOutputTokens: 1000,
         temperature: 0.7
       }
-    };
-
-    if (systemInstruction) {
-      payload.systemInstruction = {
-        parts: [{ text: systemInstruction }]
-      };
-    }
-
-    console.log(`Sending request to Google Gemini (${model})...`);
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Google API Error:", JSON.stringify(data));
-      return {
-        statusCode: response.status,
-        headers,
-        body: JSON.stringify({ error: data.error?.message || "Gemini API Error" })
-      };
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // Extracting text output from GenerateContentResponse using the .text property
+    const generatedText = response.text || "";
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ text: text })
+      body: JSON.stringify({ text: generatedText })
     };
 
   } catch (error) {
